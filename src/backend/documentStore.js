@@ -1,10 +1,13 @@
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 2;
 
 export function createEmptyDocument() {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     appVersion: "V1",
     camera: { x: 0, y: 0, z: 1, worldOffsetX: 0, worldOffsetY: 0 },
+    nodes: [],
+    images: [],
+    strands: [],
     entities: [],
     assets: []
   };
@@ -24,6 +27,16 @@ export function migrateDocument(doc) {
         schemaVersion: 1,
         entities: Array.isArray(working.entities) ? working.entities : [],
         assets: Array.isArray(working.assets) ? working.assets : []
+      };
+      continue;
+    }
+    if (version === 1) {
+      working = {
+        ...working,
+        schemaVersion: 2,
+        nodes: Array.isArray(working.nodes) ? working.nodes : [],
+        images: Array.isArray(working.images) ? working.images : [],
+        strands: Array.isArray(working.strands) ? working.strands : []
       };
       continue;
     }

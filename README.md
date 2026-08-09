@@ -6,11 +6,20 @@ Lightweight Node-based visualization shell for Ubuntu, aimed at PureRef-like inf
 
 - Frameless desktop window with custom top bar.
 - `About` button and `Close` button in top bar.
+- Top bar buttons resolve Ubuntu/GNOME symbolic icons from system theme when available (with fallback glyphs).
 - About dialog shows version `V1`.
 - Infinite-style canvas foundation:
   - camera pan/zoom around cursor
+  - adaptive fading grid levels for far zoom in/out
   - floating-origin rebasing for large world coordinates
-  - basic spatial culling with grid index
+  - spatial culling with grid index
+- Right-click menu:
+  - Create Node
+  - Add Image (file dialog)
+  - Frame All (readjust view to all content)
+- Drag-and-drop image support with sensible initial scaling.
+- Node anchor points + connection lines called **strands** with subtle animated flow.
+- Selected item has a delete `X` and confirmation dialog.
 - Portable packaging config (`AppImage` + `tar.gz`) in `electron-builder`.
 
 ## Run (Ubuntu)
@@ -35,6 +44,11 @@ npm run pack:linux
 ```
 
 Output artifacts are generated in `dist/` (including AppImage).
+
+For some Ubuntu setups where AppImage sandbox permissions are restricted, the app auto-applies Electron `--no-sandbox` flags when running from an AppImage environment.
+
+Quick launch helper script:
+- [quick-launch-nodeit.sh](/home/max/Documents/NodeIt/quick-launch-nodeit.sh)
 
 ## Proposed architecture direction (from research)
 

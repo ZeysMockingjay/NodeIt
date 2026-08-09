@@ -7,22 +7,39 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="drag-region"></div>
-      <div class="topbar-controls">
-        <button id="about-btn" class="topbar-btn">About</button>
-        <button id="close-btn" class="topbar-btn danger">Close</button>
-      </div>
-    </header>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="drag-region"></div>
+        <div class="topbar-controls">
+          <button id="about-btn" class="window-btn icon-btn about-btn" aria-label="About"></button>
+          <button id="close-btn" class="window-btn icon-btn close-btn" aria-label="Close"></button>
+        </div>
+      </header>
 
-    <main id="viewport" class="viewport">
-      <canvas id="main-canvas"></canvas>
-    </main>
+      <main id="viewport" class="viewport">
+        <canvas id="main-canvas"></canvas>
+      </main>
+    </div>
+
+    <div id="context-menu" class="context-menu" hidden>
+      <button id="menu-create-node" class="menu-item">Create Node</button>
+      <button id="menu-add-image" class="menu-item">Add Image…</button>
+      <button id="menu-frame-all" class="menu-item">Frame All</button>
+    </div>
 
     <dialog id="about-dialog" class="about-dialog">
       <h2>NodeIt</h2>
       <p id="version-label">Version V1</p>
       <button id="about-close-btn" class="topbar-btn">OK</button>
+    </dialog>
+
+    <dialog id="delete-dialog" class="about-dialog">
+      <h2>Delete selected item?</h2>
+      <p>This action cannot be undone.</p>
+      <div class="dialog-actions">
+        <button id="delete-cancel-btn" class="topbar-btn">Cancel</button>
+        <button id="delete-confirm-btn" class="topbar-btn delete-confirm">Delete</button>
+      </div>
     </dialog>
 
     <script type="module" src="./renderer.js"></script>
