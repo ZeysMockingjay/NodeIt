@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NodeIt</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="drag-region"></div>
+      <div class="topbar-controls">
+        <button id="about-btn" class="topbar-btn">About</button>
+        <button id="close-btn" class="topbar-btn danger">Close</button>
+      </div>
+    </header>
+
+    <main id="viewport" class="viewport">
+      <canvas id="main-canvas"></canvas>
+    </main>
+
+    <dialog id="about-dialog" class="about-dialog">
+      <h2>NodeIt</h2>
+      <p id="version-label">Version V1</p>
+      <button id="about-close-btn" class="topbar-btn">OK</button>
+    </dialog>
+
+    <script type="module" src="./renderer.js"></script>
+  </body>
+  </html>

@@ -1,0 +1,94 @@
+:root {
+  color-scheme: dark;
+  --bg: #2b2b2b;
+  --panel: #3a3a3a;
+  --text: #e2e2e2;
+  --purple: #7a5cff;
+  --blue: #4f8dff;
+  --yellow: #f7d04a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+body {
+  display: grid;
+  grid-template-rows: 42px 1fr;
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  height: 42px;
+  background: #242424;
+  border-bottom: 1px solid #1d1d1d;
+}
+
+.drag-region {
+  height: 100%;
+  -webkit-app-region: drag;
+}
+
+.topbar-controls {
+  display: flex;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.topbar-btn {
+  height: 28px;
+  min-width: 64px;
+  border: 1px solid #4a4a4a;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.topbar-btn:hover {
+  border-color: var(--blue);
+}
+
+.topbar-btn.danger:hover {
+  border-color: #e15e5e;
+}
+
+.viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(180deg, #2a2a2a 0%, #262626 100%);
+}
+
+#main-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.about-dialog {
+  border: 1px solid #4d4d4d;
+  border-radius: 8px;
+  background: #2d2d2d;
+  color: var(--text);
+  width: 280px;
+}
+
+.about-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}

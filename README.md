@@ -1,0 +1,63 @@
+# NodeIt (V1 Bootstrap)
+
+Lightweight Node-based visualization shell for Ubuntu, aimed at PureRef-like infinite workspace behavior.
+
+## Current state
+
+- Frameless desktop window with custom top bar.
+- `About` button and `Close` button in top bar.
+- About dialog shows version `V1`.
+- Infinite-style canvas foundation:
+  - camera pan/zoom around cursor
+  - floating-origin rebasing for large world coordinates
+  - basic spatial culling with grid index
+- Portable packaging config (`AppImage` + `tar.gz`) in `electron-builder`.
+
+## Run (Ubuntu)
+
+1. Install Node.js 20+ and npm.
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Start app:
+
+```bash
+npm start
+```
+
+## Portable build (no installer)
+
+```bash
+npm run pack:linux
+```
+
+Output artifacts are generated in `dist/` (including AppImage).
+
+## Proposed architecture direction (from research)
+
+- Runtime: Electron for fastest MVP + AppImage portability.
+- Render path:
+  - MVP: Canvas2D (already in place)
+  - Scale-up: PixiJS/WebGL when scene size grows
+- Data and save file:
+  - single portable `.nodeit` file, schema-versioned
+  - migrate-on-load strategy
+- Spatial performance:
+  - current lightweight grid index
+  - later replace/augment with R-tree (`rbush`) for large scenes
+- Process boundaries:
+  - main process: file I/O/persistence/asset pipelines
+  - renderer: UI + interaction
+  - preload: minimal IPC bridge only
+
+## Near-term roadmap (not implemented yet)
+
+- Node frames and prefab-style text fields.
+- Dark gray Blender-like visual theme refinements.
+- Node frame style inspired by Blender/Godot.
+- Image frame support.
+- Sound frame support.
+- Full scaling and asset workflow.
