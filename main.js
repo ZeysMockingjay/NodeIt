@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain, nativeImage } = require("electron");
 const fs = require("fs");
+const { promises: fsPromises } = require("fs");
 const path = require("path");
 const { pathToFileURL } = require("url");
 
@@ -122,3 +123,47 @@ function prepareImageEntries(filePaths) {
   }
   return entries;
 }
+
+/* FILE I/O handlers: Save/Open for .nodeit JSON documents */
+const userDataDir = app.getPath("userData");
+
+ipcMain.handle("file:show-save-dialog", async (_evt, suggestedName = "untitled.nodeit") => {
+  const result = await dialog.showSaveDialog({
+    title: "Save NodeIt Document",
+    defaultPath: path.join(userDataDir, suggestedName),
+    filters: [{ name: "NodeIt Documents", extensions: ["nodeit", "json"] }]
+  });
+  return result.canceled ? null : result.filePath;
+});
+
+ipcMain.handle("file:save", async (_evt, filePath, jsonString) => {
+  try {
+    await fsPromises.mkdir(path.dirname(filePath), { recursive: true });
+    await fsPromises.writeFile(filePath, jsonString, "utf8");
+    return { ok: true, filePath };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+});
+
+ipcMain.handle("file:show-open-dialog", async () => {
+  const result = await dialog.showOpenDialog({
+    title: "Open NodeIt Document",
+    properties: ["openFile"],
+    filters: [{ name: "NodeIt Documents", extensions: ["nodeit", "json"] }]
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  try {
+    const content = await fsPromises.readFile(result.filePaths[0], "utf8");
+    return { ok: true, filePath: result.filePaths[0], content };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+});
+
+ipcMain.handle("file:autosave-path", async (_evt, baseName = "autosave.nodeit") => {
+  const autosaveFolder = path.join(userDataDir, "autosaves");
+  await fsPromises.mkdir(autosaveFolder, { recursive: true });
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  return path.join(autosaveFolder, `${ts}-${baseName}`);
+});

@@ -193,3 +193,10 @@ body {
   background: #3a3a3a;
   border-color: #4d4d4d;
 }
+
+.menu-divider {
+  border: none;
+  border-top: 1px solid #3f3f3f;
+  margin: 4px 0;
+  padding: 0;
+}

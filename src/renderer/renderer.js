@@ -1,6 +1,7 @@
 import { Camera2D } from "../backend/camera2d.js";
-import { createEmptyDocument } from "../backend/documentStore.js";
+import { createEmptyDocument, migrateDocument } from "../backend/documentStore.js";
 import { SpatialGridIndex } from "../backend/spatialIndex.js";
+import { saveDocumentAs, openDocument, autosaveDocument } from "./saveLoad.js";
 
 const closeBtn = document.getElementById("close-btn");
 const aboutBtn = document.getElementById("about-btn");
@@ -16,6 +17,9 @@ const contextMenu = document.getElementById("context-menu");
 const menuCreateNode = document.getElementById("menu-create-node");
 const menuAddImage = document.getElementById("menu-add-image");
 const menuFrameAll = document.getElementById("menu-frame-all");
+const menuOpen = document.getElementById("menu-open");
+const menuSave = document.getElementById("menu-save");
+const menuSaveAs = document.getElementById("menu-save-as");
 
 const camera = new Camera2D();
 const doc = createEmptyDocument();
@@ -73,6 +77,35 @@ menuAddImage.addEventListener("click", async () => {
 
 menuFrameAll.addEventListener("click", () => {
   frameAllContent();
+  hideContextMenu();
+});
+
+menuOpen.addEventListener("click", async () => {
+  const res = await openDocument();
+  if (res.ok) {
+    const migrated = migrateDocument(res.doc);
+    Object.assign(doc, migrated);
+    reindexAll();
+    requestRender();
+  } else {
+    console.warn("Open failed or cancelled", res);
+  }
+  hideContextMenu();
+});
+
+menuSave.addEventListener("click", async () => {
+  const res = await saveDocumentAs(doc, "project.nodeit");
+  if (!res.ok) {
+    console.warn("Save failed", res.error);
+  }
+  hideContextMenu();
+});
+
+menuSaveAs.addEventListener("click", async () => {
+  const res = await saveDocumentAs(doc, "project.nodeit");
+  if (!res.ok) {
+    console.warn("Save As failed", res.error);
+  }
   hideContextMenu();
 });
 
@@ -223,8 +256,19 @@ window.addEventListener("resize", () => {
 });
 
 initializeTopBarIcons();
+seedDemoContent();
+reindexAll();
 resizeCanvas();
 requestRender();
+
+/* Autosave every 10 seconds */
+setInterval(async () => {
+  try {
+    await autosaveDocument(doc);
+  } catch (e) {
+    console.warn("Autosave failed", e);
+  }
+}, 10000);
 
 async function initializeTopBarIcons() {
   const icons = await window.desktopAPI.getSystemIcons();
@@ -238,6 +282,29 @@ function applySystemIcon(button, iconUrl) {
   }
   button.style.backgroundImage = `url("${iconUrl}")`;
   button.classList.add("has-system-icon");
+}
+
+function seedDemoContent() {
+  const samples = [
+    { id: createId("node"), x: -220, y: -120, w: 200, h: 110, color: "#7a5cff" },
+    { id: createId("node"), x: 60, y: 45, w: 220, h: 120, color: "#4f8dff" },
+    { id: createId("node"), x: -20, y: 260, w: 250, h: 110, color: "#f7d04a" }
+  ];
+  doc.nodes.push(...samples);
+}
+
+function reindexAll() {
+  nodeIndex.cells.clear();
+  nodeIndex.items.clear();
+  imageIndex.cells.clear();
+  imageIndex.items.clear();
+  
+  for (const node of doc.nodes) {
+    updateEntityIndex("node", node);
+  }
+  for (const image of doc.images) {
+    updateEntityIndex("image", image);
+  }
 }
 
 function selectEntity(nextEntity) {
