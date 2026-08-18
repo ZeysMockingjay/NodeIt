@@ -15,6 +15,7 @@ const canvas = document.getElementById("main-canvas");
 const viewport = document.getElementById("viewport");
 const contextMenu = document.getElementById("context-menu");
 const menuCreateNode = document.getElementById("menu-create-node");
+const menuCreateImageNode = document.getElementById("menu-create-image-node");
 const menuAddImage = document.getElementById("menu-add-image");
 const menuFrameAll = document.getElementById("menu-frame-all");
 const menuOpen = document.getElementById("menu-open");
@@ -38,6 +39,7 @@ let lastPointerY = 0;
 let renderQueued = false;
 let deleteButtonRect = null;
 let contextMenuWorld = { x: 0, y: 0 };
+const NODE_CORNER_RADIUS = 18;
 
 closeBtn.addEventListener("click", () => {
   window.desktopAPI.closeWindow();
@@ -64,6 +66,14 @@ deleteConfirmBtn.addEventListener("click", () => {
 
 menuCreateNode.addEventListener("click", () => {
   createNodeAt(contextMenuWorld.x, contextMenuWorld.y);
+  hideContextMenu();
+});
+
+menuCreateImageNode.addEventListener("click", async () => {
+  const entries = await window.desktopAPI.pickImages();
+  if (entries.length > 0) {
+    createImageNodesAt(entries, contextMenuWorld.x, contextMenuWorld.y);
+  }
   hideContextMenu();
 });
 
@@ -286,9 +296,36 @@ function applySystemIcon(button, iconUrl) {
 
 function seedDemoContent() {
   const samples = [
-    { id: createId("node"), x: -220, y: -120, w: 200, h: 110, color: "#7a5cff" },
-    { id: createId("node"), x: 60, y: 45, w: 220, h: 120, color: "#4f8dff" },
-    { id: createId("node"), x: -20, y: 260, w: 250, h: 110, color: "#f7d04a" }
+    {
+      id: createId("node"),
+      x: -220,
+      y: -120,
+      w: 200,
+      h: 110,
+      color: "#7a5cff",
+      mode: "text",
+      text: "Text node"
+    },
+    {
+      id: createId("node"),
+      x: 60,
+      y: 45,
+      w: 220,
+      h: 120,
+      color: "#4f8dff",
+      mode: "text",
+      text: "Create strands from anchors"
+    },
+    {
+      id: createId("node"),
+      x: -20,
+      y: 260,
+      w: 250,
+      h: 110,
+      color: "#f7d04a",
+      mode: "text",
+      text: "Right-click to add image nodes"
+    }
   ];
   doc.nodes.push(...samples);
 }
@@ -332,11 +369,46 @@ function createNodeAt(worldX, worldY) {
     y: worldY - 64,
     w: 220,
     h: 128,
-    color: "#4f8dff"
+    color: "#4f8dff",
+    mode: "text",
+    text: "Text node"
   };
   doc.nodes.push(node);
   updateEntityIndex("node", node);
   selectEntity({ type: "node", id: node.id });
+  requestRender();
+}
+
+function createImageNodesAt(entries, worldX, worldY) {
+  let offset = 0;
+  for (const entry of entries) {
+    const maxNodeDimension = 320;
+    const sourceMax = Math.max(entry.width, entry.height);
+    const scale = sourceMax > 0 ? Math.min(1, maxNodeDimension / sourceMax) : 1;
+    const imageWidth = Math.max(72, Math.round(entry.width * scale));
+    const imageHeight = Math.max(72, Math.round(entry.height * scale));
+    const node = {
+      id: createId("node"),
+      x: worldX + offset,
+      y: worldY + offset,
+      w: Math.max(200, imageWidth + 28),
+      h: imageHeight + 56,
+      color: "#4f8dff",
+      mode: "image",
+      text: entry.name,
+      imagePath: entry.path,
+      imageUrl: entry.url,
+      imageWidth: entry.width,
+      imageHeight: entry.height
+    };
+    doc.nodes.push(node);
+    updateEntityIndex("node", node);
+    offset += 28;
+  }
+  const latest = doc.nodes.at(-1);
+  if (latest) {
+    selectEntity({ type: "node", id: latest.id });
+  }
   requestRender();
 }
 
@@ -663,23 +735,78 @@ function drawVisibleNodes(width, height) {
     const topLeft = camera.worldToScreen(node.x, node.y, width, height);
     const drawW = node.w * camera.z;
     const drawH = node.h * camera.z;
+    const mode = node.mode === "image" && node.imageUrl ? "image" : "text";
 
     context.fillStyle = "rgba(59,68,105,0.45)";
-    roundedRectPath(context, topLeft.x, topLeft.y, drawW, drawH, 14);
+    roundedRectPath(context, topLeft.x, topLeft.y, drawW, drawH, NODE_CORNER_RADIUS);
     context.fill();
+
+    if (mode === "image") {
+      drawImageNodeContent(node, topLeft.x, topLeft.y, drawW, drawH);
+    } else {
+      drawTextNodeContent(node, topLeft.x, topLeft.y, drawW, drawH);
+    }
 
     context.strokeStyle = node.color;
     context.lineWidth = 1.2;
-    roundedRectPath(context, topLeft.x, topLeft.y, drawW, drawH, 14);
+    roundedRectPath(context, topLeft.x, topLeft.y, drawW, drawH, NODE_CORNER_RADIUS);
     context.stroke();
 
     if (selectedEntity?.type === "node" && selectedEntity.id === node.id) {
       context.strokeStyle = "#f2f2f2";
       context.lineWidth = 1.1;
-      roundedRectPath(context, topLeft.x - 1, topLeft.y - 1, drawW + 2, drawH + 2, 15);
+      roundedRectPath(context, topLeft.x - 1, topLeft.y - 1, drawW + 2, drawH + 2, NODE_CORNER_RADIUS + 1);
       context.stroke();
       drawNodeAnchors(node, width, height);
       drawDeleteButton(topLeft.x + drawW - 18, topLeft.y + 2);
+    }
+
+    function drawTextNodeContent(node, x, y, w, h) {
+      const text = typeof node.text === "string" && node.text.trim() ? node.text.trim() : "Text node";
+      context.fillStyle = "rgba(16,18,25,0.45)";
+      roundedRectPath(context, x + 8, y + 8, Math.max(24, w - 16), Math.max(24, h - 16), NODE_CORNER_RADIUS - 6);
+      context.fill();
+
+      const fontSize = clamp(11 * camera.z, 11, 18);
+      context.fillStyle = "#eef1ff";
+      context.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(text.slice(0, 64), x + w / 2, y + h / 2, Math.max(24, w - 20));
+    }
+
+    function drawImageNodeContent(node, x, y, w, h) {
+      const imageInset = 10;
+      const labelHeight = clamp(24 * camera.z, 22, 32);
+      const imageAreaHeight = Math.max(24, h - imageInset * 2 - labelHeight);
+      const imageX = x + imageInset;
+      const imageY = y + imageInset;
+      const imageW = Math.max(24, w - imageInset * 2);
+      const imageH = imageAreaHeight;
+
+      context.fillStyle = "rgba(20,22,28,0.55)";
+      roundedRectPath(context, imageX, imageY, imageW, imageH, NODE_CORNER_RADIUS - 7);
+      context.fill();
+
+      const img = getCachedImage(node.imageUrl);
+      roundedRectPath(context, imageX, imageY, imageW, imageH, NODE_CORNER_RADIUS - 7);
+      context.save();
+      context.clip();
+      if (img.complete) {
+        context.drawImage(img, imageX, imageY, imageW, imageH);
+      } else {
+        context.fillStyle = "#333";
+        context.fillRect(imageX, imageY, imageW, imageH);
+      }
+      context.restore();
+
+      context.fillStyle = "#eef1ff";
+      const fontSize = clamp(10 * camera.z, 10, 15);
+      context.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      const label = typeof node.text === "string" && node.text.trim() ? node.text.trim() : "Image node";
+      context.fillText(label.slice(0, 64), x + w / 2, y + h - imageInset - labelHeight / 2, Math.max(24, w - 20));
     }
   }
 }
