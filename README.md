@@ -15,8 +15,12 @@ Lightweight Node-based visualization shell for Ubuntu, aimed at PureRef-like inf
   - spatial culling with grid index
 - Right-click menu:
   - Create Node
+  - Create Image Node
   - Add Image (file dialog)
   - Frame All (readjust view to all content)
+- Node modes:
+  - normal text nodes
+  - image nodes with rounded corners
 - Drag-and-drop image support with sensible initial scaling.
 - Node anchor points + connection lines called **strands** with subtle animated flow.
 - Selected item has a delete `X` and confirmation dialog.
@@ -47,8 +51,13 @@ Output artifacts are generated in `dist/` (including AppImage).
 
 For some Ubuntu setups where AppImage sandbox permissions are restricted, the app auto-applies Electron `--no-sandbox` flags when running from an AppImage environment.
 
-Quick launch helper script:
-- [quick-launch-nodeit.sh](/home/max/Documents/NodeIt/quick-launch-nodeit.sh)
+Install a desktop launcher (creates a clickable Desktop icon and app launcher):
+
+```bash
+npm run desktop:install
+```
+
+This expects a built executable at `dist/linux-unpacked/nodeit`, so run `npm run pack:linux` first.
 
 ## Proposed architecture direction (from research)
 
